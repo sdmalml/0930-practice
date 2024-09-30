@@ -25,7 +25,7 @@ jobs:
         with:
             push: true
             tags: taekkim/iris-inference:latest
-            cache-from: type=registry,ref=taekkim/iris-inference:latest
+            cache-from: type=registry,ref=seojaebeom/iris-inference:latest
             cache-to: type=inline
 
       # SSH를 이용해 EC2 서버로 배포
@@ -35,10 +35,10 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_KEY: ${{ secrets.EC2_KEY }}
         run: |
-          echo "$EC2_KEY" > ec2_key.pem
-          chmod 600 ec2_key.pem
+          echo "${{ secrets.EC2_PEM_KEY }}" > ~/student13.pem
+          chmod 600 student13.pem
           # EC2에 접속하여 기존 컨테이너 중지 및 새 도커 이미지 실행
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -i student13.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
             # Install Docker if not installed
             if ! command -v docker &> /dev/null
             then
