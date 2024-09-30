@@ -15,7 +15,6 @@ MODEL = get_model()
 # Create a FastAPI instance
 app = FastAPI()
 
-
 @app.post("/predict", response_model=PredictOut)
 def predict(data: PredictIn) -> PredictOut:
     df = pd.DataFrame([data.dict()])
