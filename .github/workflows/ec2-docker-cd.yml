@@ -1,0 +1,59 @@
+name: EC2 Auto Deploy
+
+on: push  # main 브랜치에 푸시될 때만 트리거
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 리포지토리 클론
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+            username: ${{ secrets.DOCKER_HUB_USERNAME }}
+            password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+            push: true
+            tags: taekkim/iris-inference:latest
+            cache-from: type=registry,ref=taekkim/iris-inference:latest
+            cache-to: type=inline
+
+      # SSH를 이용해 EC2 서버로 배포
+      - name: Deploy to EC2 via SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_KEY: ${{ secrets.EC2_KEY }}
+        run: |
+          echo "$EC2_KEY" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          # EC2에 접속하여 기존 컨테이너 중지 및 새 도커 이미지 실행
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            # Install Docker if not installed
+            if ! command -v docker &> /dev/null
+            then
+              echo "Docker not found. Installing Docker..."
+              sudo yum install docker -y
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker $USER
+            fi
+            
+            # 기존 컨테이너 중지 및 삭제
+            docker stop iris-inference || true
+            docker rm iris-inference || true
+            # Docker Hub에서 최신 이미지 가져오기
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/iris-inference:latest
+            # 새 이미지를 기반으로 컨테이너 실행
+            docker run -d --name iris-inference -p 8000:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/iris-inference:latest
+          EOF
