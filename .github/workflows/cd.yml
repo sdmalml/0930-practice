@@ -16,14 +16,13 @@ jobs:
     # SSH PEM 키 설정
     - name: Set up PEM file for SSH
       run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_PEM_KEY }}" > ~/.ssh/student13.pem
-        chmod 400 ~/.ssh/student13.pem
+        echo "${{ secrets.EC2_PEM_KEY }}" > ~/student13.pem
+        chmod 400 ~/student13.pem
 
     # EC2에 연결하여 배포
     - name: Deploy to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/student13.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ~/student13.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
           cd /home/ec2-user/practice0930
           git pull origin main
           source .venv/bin/activate
