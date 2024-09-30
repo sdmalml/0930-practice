@@ -26,6 +26,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+      # 모델 훈련 및 저장
+    - name: Train model
+      run: |
+        python train.py  # train.py를 실행해 model_pipeline.joblib 생성
+
     - name: Run tests
       run: |
         pytest tests/
