@@ -24,7 +24,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
             push: true
-            tags: taekkim/iris-inference:latest
+            tags: seojaebeom/iris-inference:latest
             cache-from: type=registry,ref=seojaebeom/iris-inference:latest
             cache-to: type=inline
 
