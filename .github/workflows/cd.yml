@@ -19,7 +19,7 @@ jobs:
         echo "${{ secrets.EC2_PEM_KEY }}" > ~/student13.pem
         chmod 400 ~/student13.pem
 
-    # EC2에 연결하여 배포
+    # EC2에 연결하여 배포 및 uvicorn 실행
     - name: Deploy to EC2
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/student13.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
@@ -27,5 +27,6 @@ jobs:
           git pull origin main
           source .venv/bin/activate
           pip install -r requirements.txt
-          uvicorn inference:app --host 0.0.0.0 --port 8000
+          pkill -f uvicorn || true  # 기존 uvicorn 서버 중지
+          nohup uvicorn inference:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
         EOF
